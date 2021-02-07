@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace DogOnTop
@@ -13,9 +12,18 @@ namespace DogOnTop
         [STAThread]
         static void Main()
         {
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new mainForm());
+            using (var mutex = new Mutex(false, "DogOnTopMutex"))
+            {
+                if (!mutex.WaitOne(TimeSpan.Zero) &&
+                    (MessageBox.Show("僅可執行一個 DogOnTop", "DogOnTop", MessageBoxButtons.OK, MessageBoxIcon.Warning) == DialogResult.OK))
+                {
+                    return;
+                }
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+                Application.Run(new mainForm());
+                mutex.ReleaseMutex();
+            }
         }
     }
 }
